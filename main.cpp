@@ -9,22 +9,24 @@
 #define BLOCK_SIZE 16
 #define MAX_NUM_CHANNEL 6
 
+enum Enable {OFF, ON} click;
+enum Mode {Default = 1, LR, LR_LFE, All} mod;
 double sampleBuffer[MAX_NUM_CHANNEL][BLOCK_SIZE];
 
 /*
 L = 0
-R = 1
-C = 2
+C = 1
+R = 2
 Ls = 3
 Rs = 4
 LFE = 5
 */
 
-void processing(double pInbuf[][BLOCK_SIZE], double pOutbuf[][BLOCK_SIZE]) {
+void processing(double pInbuf[][BLOCK_SIZE], double pOutbuf[][BLOCK_SIZE], int enable, int mode) {
 
 	int i;
 	const double input_gain = 0.251189;
-	const double headroom_gain = 0.251189;
+	//const double headroom_gain = 0.251189;
 	const double gain_1 = 0.794328;
 	const double gain_2 = 0.630957;
 	const double gain_3 = 0.501187;
@@ -35,23 +37,89 @@ void processing(double pInbuf[][BLOCK_SIZE], double pOutbuf[][BLOCK_SIZE]) {
 
 	state.numChannels = MAX_NUM_CHANNEL;
 	state.numSamples = BLOCK_SIZE;
-	state.gain = headroom_gain;
+	state.gain = /*headroom_gain*/ input_gain;
 	state.type = SOFT_CLIPPING;
 	state.threshold1 = FLT_MAX;
-	state.threshold2 = 3.400000000E+38F;
+	//state.threshold1 = 1.000000000E+38F;
+	state.threshold2 = 3.000000000E+38F;
 
-	for (i = 0; i < BLOCK_SIZE; i++) {
-		sum[i] = pInbuf[0][i] * input_gain + pInbuf[1][i] * input_gain;			//Blok +
-		headroom[i] = sum[i] * headroom_gain;
-		pOutbuf[3][i] = pInbuf[0][i] * input_gain * gain_2;						//Blok Ls
-		pOutbuf[4][i] = pInbuf[1][i] * input_gain * gain_1;						//Blok Rs
-		pOutbuf[2][i] = headroom[i];											//Blok C
-		processSingleChannel(sum, pOutbuf[5], state);							//Blok LFE
-		pOutbuf[1][i] = headroom[i] * gain_4;									//Blok R
-		pOutbuf[0][i] = headroom[i] * gain_3;									//Blok L
+	if (enable == ON) {
+		if (mode == LR) {
+			for (i = 0; i < BLOCK_SIZE; i++) {
+				sum[i] = pInbuf[0][i] * input_gain + pInbuf[2][i] * input_gain;			//Blok +
+				headroom[i] = sum[i] * /*headroom_gain*/ input_gain;
+				pOutbuf[3][i] = 0;														//Blok Ls
+				pOutbuf[4][i] = 0;														//Blok Rs
+				pOutbuf[1][i] = 0;														//Blok C
+				pOutbuf[2][i] = headroom[i] * gain_4;									//Blok R
+				pOutbuf[0][i] = headroom[i] * gain_3;									//Blok L
+				pOutbuf[5][i] = 0;														//Blok LFE
+			}
+
+			//processSingleChannel(sum, pOutbuf[5], state);								//Blok LFE
+		}
+
+		else if (mode == LR_LFE) {
+			for (i = 0; i < BLOCK_SIZE; i++) {
+				sum[i] = pInbuf[0][i] * input_gain + pInbuf[2][i] * input_gain;			//Blok +
+				headroom[i] = sum[i] * /*headroom_gain*/ input_gain;
+				pOutbuf[3][i] = 0;														//Blok Ls
+				pOutbuf[4][i] = 0;														//Blok Rs
+				pOutbuf[1][i] = 0;														//Blok C
+				pOutbuf[2][i] = headroom[i] * gain_4;									//Blok R
+				pOutbuf[0][i] = headroom[i] * gain_3;									//Blok L
+
+			}
+
+			processSingleChannel(sum, pOutbuf[5], state);								//Blok LFE
+		}
+
+		else if (mode == All) {
+			for (i = 0; i < BLOCK_SIZE; i++) {
+				sum[i] = pInbuf[0][i] * input_gain + pInbuf[2][i] * input_gain;			//Blok +
+				headroom[i] = sum[i] * /*headroom_gain*/ input_gain;
+				pOutbuf[3][i] = pInbuf[0][i] * input_gain * gain_2;						//Blok Ls
+				pOutbuf[4][i] = pInbuf[2][i] * input_gain * gain_1;						//Blok Rs
+				pOutbuf[1][i] = headroom[i];											//Blok C
+				pOutbuf[2][i] = headroom[i] * gain_4;									//Blok R
+				pOutbuf[0][i] = headroom[i] * gain_3;									//Blok L
+
+			}
+
+			processSingleChannel(sum, pOutbuf[5], state);								//Blok LFE
+		}
+
+		else if (mode == Default) {
+			for (i = 0; i < BLOCK_SIZE; i++) {
+				sum[i] = pInbuf[0][i] * input_gain + pInbuf[2][i] * input_gain;			//Blok +
+				headroom[i] = sum[i] * /*headroom_gain*/ input_gain;
+				pOutbuf[3][i] = pInbuf[0][i] * input_gain * gain_2;						//Blok Ls
+				pOutbuf[4][i] = pInbuf[2][i] * input_gain * gain_1;						//Blok Rs
+				pOutbuf[1][i] = headroom[i];											//Blok C
+				pOutbuf[2][i] = headroom[i] * gain_4;									//Blok R
+				pOutbuf[0][i] = headroom[i] * gain_3;									//Blok L
+				pOutbuf[5][i] = 0;														//Blok LFE
+			}
+
+			//processSingleChannel(sum, pOutbuf[5], state);								//Blok LFE
+		}
 
 	}
 
+	if (enable == OFF) {																//Mode = Default 
+		for (i = 0; i < BLOCK_SIZE; i++) {
+			sum[i] = pInbuf[0][i] * input_gain + pInbuf[2][i] * input_gain;				//Blok +
+			headroom[i] = sum[i] * /*headroom_gain*/ input_gain;
+			pOutbuf[3][i] = pInbuf[0][i] * input_gain * gain_2;							//Blok Ls
+			pOutbuf[4][i] = pInbuf[2][i] * input_gain * gain_1;							//Blok Rs
+			pOutbuf[1][i] = headroom[i];												//Blok C
+			pOutbuf[2][i] = headroom[i] * gain_4;										//Blok R
+			pOutbuf[0][i] = headroom[i] * gain_3;										//Blok L
+			pOutbuf[5][i] = 0;															//Blok LFE
+		}
+
+		//processSingleChannel(sum, pOutbuf[5], state);									//Blok LFE
+	}
 }
 
 int main(int argc, char* argv[])
@@ -82,7 +150,7 @@ int main(int argc, char* argv[])
 	// Set up output WAV header
 	//-------------------------------------------------	
 	outputWAVhdr = inputWAVhdr;
-	outputWAVhdr.fmt.NumChannels = inputWAVhdr.fmt.NumChannels; // change number of channels
+	outputWAVhdr.fmt.NumChannels = MAX_NUM_CHANNEL/*inputWAVhdr.fmt.NumChannels*/; // change number of channels
 
 	int oneChannelSubChunk2Size = inputWAVhdr.data.SubChunk2Size / inputWAVhdr.fmt.NumChannels;
 	int oneChannelByteRate = inputWAVhdr.fmt.ByteRate / inputWAVhdr.fmt.NumChannels;
@@ -120,7 +188,10 @@ int main(int argc, char* argv[])
 				}
 			}
 
-			processing(sampleBuffer, sampleBuffer);
+			int enable = (int)argv[3];
+			int mode = (int)argv[4];
+
+			processing(sampleBuffer, sampleBuffer, enable, mode);
 
 			for (int j = 0; j<BLOCK_SIZE; j++)
 			{
