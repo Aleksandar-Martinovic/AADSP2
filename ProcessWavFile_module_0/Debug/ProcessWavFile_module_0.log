@@ -1,0 +1,10 @@
+﻿C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppBuild.targets(392,5): warning MSB8028: The intermediate directory (Debug\) contains files shared from another project (ProcessWavFile_model_0.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  WAVheader.cpp
+  main.cpp
+c:\users\sail_96\desktop\aadsp2\project\processwavfile_module_0\processwavfile_module_0\main.cpp(41): warning C4305: '=': truncation from 'const double' to 'float'
+c:\users\sail_96\desktop\aadsp2\project\processwavfile_module_0\processwavfile_module_0\main.cpp(43): warning C4305: '=': truncation from 'double' to 'float'
+c:\users\sail_96\desktop\aadsp2\project\processwavfile_module_0\processwavfile_module_0\main.cpp(191): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+  distortion.cpp
+  Generating Code...
+  ProcessWavFile_module_0.vcxproj -> C:\Users\Sail_96\Desktop\AADSP2\Project\ProcessWavFile_module_0\Debug\ProcessWavFile_module_0.exe
+  ProcessWavFile_module_0.vcxproj -> C:\Users\Sail_96\Desktop\AADSP2\Project\ProcessWavFile_module_0\Debug\ProcessWavFile_module_0.pdb (Partial PDB)
